@@ -1,0 +1,377 @@
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <!-- <script src="http://localhost/zlib/js/jquery_3.4.1.min.js"></script> -->
+  <script>
+    // let data_name='';
+
+    let is_showKey = 0;
+    let sc = 1.5;
+    // let KB_W=(45 * 13 + 80) * sc;
+    let KB_W = (45 * 15) * sc;
+    let K_W = 45 * sc;
+    $(document).ready(() => {
+      fillBox();
+      parseKMap();
+      addLs();
+    });
+
+    function showErrKeys() {
+      let ls = kmap.filter(x => !x.fns.length);
+      if (ls.length) {
+        console.log(`err keys>>`);
+        console.log(ls);
+      }
+    }
+
+    // --------
+    // let mapName2Sym = { 'Meta': '⌘', 'Alt': '⌥', 'Control': '⌃', 'Shift': '⇧','FN':'fn' };
+    // '⌘'
+    let lastFns = ['⌘'];
+    //监听-键盘
+    function addLs() {
+      $(document).keydown((ev) => {
+        onKey(ev, 1);
+      });
+      $(document).keyup((ev) => {
+        onKey(ev, 0);
+      });
+    }
+
+    let curFns = [];
+    let isLock = 0;
+    /**
+     * 监测-按键->
+     * 1.1键-按(持),起
+     * 2.1键-按(持),2键-按(持),2键-起(延迟0.1s,改持),1键-起
+     */
+    function onKey(ev, isDown) {
+      // if (!isDown && ev.key == '`') {
+      // MetaRight
+      if (isDown && ev.code == 'MetaRight') {
+        isLock = !isLock;
+        //.note
+        $('.kb').css('border-color', isLock ? 'red' : 'lightgray');
+      }
+      if (isLock) { return; }
+      //x
+      let ret = getFns(ev);
+      curFns = ret;
+      //x
+      // console.log(`debug>>---------------`);
+      // logKey(ret);
+      window.ev = ev;
+      // isDown
+      if (is_showKey && !isDown) {
+        console.log(`onKey>>key:${ev.key},code:${ev.code},kcode:${ev.keyCode}`);
+        console.log(ev);
+      }
+      // markT();
+      //x
+      function doFn() {
+        // console.log(`doFn>>tmp:${ret},cur:${curFns},last:${lastFns}`);
+        //当前-无fn,则不动
+        if (!curFns.length) { return; }
+        lastFns = ret;
+        //x
+        // if(!lastFns.length){lastFns=['⌘'];}
+        // console.log(`doFn_set>>tmp:${ret},cur:${curFns},last:${lastFns}`);
+        //x
+        showKMap();
+      }
+      //x
+      //2fn变1fn时
+      if (!isDown && ret.length) {
+        // console.log(`delay>>cur:${ret},last:${lastFns}`);
+        setTimeout(() => {
+          doFn();
+        }, 100);
+        return;
+      }
+      doFn();
+    }
+
+    //ev->['⌘','⌥']
+    function getFns(ev) {
+      let ret = [];
+      if (ev.metaKey) { ret.push('⌘'); }
+      if (ev.altKey) { ret.push('⌥'); }
+      if (ev.shiftKey) { ret.push('⇧'); }
+      if (ev.ctrlKey) { ret.push('⌃'); }
+      // if (ev.key==1) { ret.push('FN'); }
+      return ret;
+    }
+
+    let lastT = 0;
+    let markT = (tag = '') => {
+      let now = new Date().getTime();
+      let gap = (now - lastT) / 1000;
+      lastT = now;
+      if (tag) { tag += '.' }
+      console.log(`${tag}gap>>${gap}`);
+    }
+
+    //打印-键盘事件
+    function logKey(ev) {
+      //       console.log(`key>>key:${ev.key},kcode:${ev.keyCode},char:${ev.char},ccode:${ev.charCode},
+      // ⌘:${ev.metaKey ? 1 : 0},⇧:${ev.shiftKey ? 1 : 0},⌥:${ev.altKey ? 1 : 0},⌃:${ev.ctrlKey ? 1 : 0}`);
+      console.log(`key>>⌘:${ev.metaKey ? 1 : 0},⇧:${ev.shiftKey ? 1 : 0},⌥:${ev.altKey ? 1 : 0},⌃:${ev.ctrlKey ? 1 : 0}`);
+    }
+
+    let kmap = [];
+    let fnKeys = '⌘,⌥,⇧,⌃,fn'.split(',');
+    let fnKeys_reg = new RegExp(fnKeys.join('|'));
+
+    //解析-命令s
+    async function parseKMap() {
+      //kmap_data
+      await $.get('./kmap.js');
+      // let kmap_data=kmap_data1;
+      let keys = kmap_data.trim();
+      keys.split('\n').forEach(x => {
+        if (!x.match(fnKeys_reg)) { return; }
+        x = x.replace(/^\d+\./, '').trim();
+        // x=x.split(',');
+        x = x.match(/[^,][^\(]+\([^\)]+\)/g);
+        x.forEach(prX => {
+          prX = prX.trim();//.replace(/^,/,'');
+          pr = prX.match(/(.+)\((.+)\)/);
+          if (!pr) {
+            console.log(`debug>>${prX}`);
+            debugger
+          }
+          let tar = ks2obj(pr[1]);
+          tar.v = pr[2];
+          kmap.push(tar);
+          // console.log(pr);
+        });
+        // console.log(x);
+      });
+      //x
+      statCnt();
+      //初始刷
+      showKMap();
+    }
+
+    //键盘上显示-kmap
+    function showKMap() {
+      let fns = lastFns;
+      if (typeof (fns) == typeof ('')) { fns = [fns]; }
+      //reset
+      // $('.ct').text('');
+      $('.cts').empty();
+      //x
+      fnKeys.forEach(x => {
+        $(`[data=${x}]:eq(0)`).css('background', '');
+      });
+      fns.forEach(x => {
+        //fn需转
+        // x=x.toUpperCase();
+        $(`[data=${x}]:eq(0)`).css('background', 'yellow');
+      });
+      kmap.forEach(x => {
+        // let ks=ks2obj(x.k);
+        let ks = x;
+        if (ks.fns.sort() + '' != fns.sort() + '') { return; }
+        // let tmpNd = $(`[data='${ks.cm}'] .cts`);
+        let cm = ks.cm;
+        if (cm == '\\') { cm = '\\\\'; }
+        let tmpNd = $(`[data='${cm}'] .cts`);
+
+        tmpNd.append(`<span class='ct'>${ks.v}</span>`);
+      });
+    }
+
+    //⌘+⇧+c->{fns:['⌘','⇧'],cm:'C'}
+    //1.fns已排序
+    function ks2obj(v) {
+      let ks = v.split('+');
+      let tmp_fns = ks.filter(x => fnKeys.includes(x)).sort();
+      //x,fn需转
+      tmp_fns = tmp_fns.map(x => x.toUpperCase());
+      let tmp_cm = ks.filter(x => !fnKeys.includes(x))[0];
+      tmp_cm = mapKey(tmp_cm);
+      return { fns: tmp_fns, cm: tmp_cm };
+    }
+
+    //统计-各模式快捷键数
+    function statCnt() {
+      let modes = {};
+      let set_all = new Set();
+      //stat
+      kmap.forEach(x => {
+        let k = x.fns + '';
+        if (modes[k]) { modes[k]++; } else { modes[k] = 1; }
+        // x
+        set_all.add(k + x.cm);
+      });
+      //x
+      let ls = [];
+      let ret = '';
+      //obj转ls
+      for (const key in modes) {
+        if (modes.hasOwnProperty(key)) {
+          const v = modes[key];
+          if (!key) {
+            console.error(`err>>fns:${key},cnt:${v}`);
+            continue;
+          }
+          ls.push({ k: sortFnsByRead(key), v });
+        }
+      }
+      ls.sort((a, b) => {
+        return fns2num(a.k) > fns2num(b.k) ? 1 : -1;
+      });
+      let ret_ls = [];
+      ls.forEach(x => {
+        ret_ls += `${x.k}\t${x.v}\n`;
+      });
+      ret_ls += `total>>\t${set_all.size}/${kmap.length}`;
+      // let tmp=JSON.stringify(modes,0,2);
+      // let tmp = JSON.stringify(ls, 0, 2);
+      $('.note_in').text(ret_ls);
+      console.log(modes);
+      //x
+      showErrKeys();
+    }
+
+    function fns2num(v) {
+      let ls = v.split(',');
+      ls = ls.map(x => {
+        return fns_read.indexOf(x);
+      });
+      return ls.join('');
+    }
+
+    let fns_read = '⌘,⌥,⌃,⇧'.split(',');
+    //'⌥,⌘'->'⌘,⌥'
+    function sortFnsByRead(v) {
+      let ls = v.split(',');
+      ls.sort((a, b) => {
+        return fns_read.indexOf(a) - fns_read.indexOf(b);
+      });
+      return ls + '';
+    }
+
+    //普通键-key映射
+    function mapKey(v) {
+      if (v == '空') { v = 'space'; }
+      return v.toUpperCase();
+    }
+
+    //绘制-键s
+    function fillBox() {
+      let kb = $('.kb');
+      // let line = $('.line');
+      // x,len=45*13+80=665
+      kb.css('width', KB_W + 'px');
+      // x
+      let fns = [...Array(12).keys()].map(x => `F${x + 1}`);
+      let line_top = ['esc', fns, 'ml', 'mr'];
+      let keys = ['`1234567890-='.split(''), 'del',
+        'tab', 'QWERTYUIOP[]\\'.split(''),
+        'cap', `ASDFGHJKL;'`.split(''), '↩',
+        '⇧', 'ZXCVBNM,./'.split(''), 'ml', 'mr',
+        'fn', '⌃', '⌥', '⌘', 'space', '⌘', '⌥', '←', '↑', '↓', '→'
+      ].flat();
+      keys = keys.map(x => {
+        let w = K_W;
+        let h = w;
+        if (['del', 'tab', 'cap', '↩'].includes(x)) { w = K_W * 2; }
+        if (x == '⇧') { w = K_W * 2.5; }
+        if (x == 'space') { w = K_W * 5; }
+        if (['ml', 'mr'].includes(x)) { w = K_W * 2.5 / 2; }
+        // if(['↑','↓','←','→'].includes(x)){w=K_W*5/4;}
+        return { key: x, w, h };
+      });
+      //x
+      // keys=keys.splice(0,20);
+      keys.forEach(x => {
+        //↑/↓
+        if (x.key == 'ud' + 'x') {
+          // border:0
+          // border:0;border-top:1px red solid
+          kb.append(`
+          <div style='width:${x.w}px;height:${x.h}'>
+            <div class='key' style='width:${x.w}px;height:${x.h / 2};' data='↑'>
+              <b>↑</b><div class='cts'></div>
+            </div>
+            <div class='key' style='width:${x.w}px;height:${x.h / 2};' data='↓''>
+              <b>↓</b><div class='cts'></div>
+            </div>
+          </div>`);
+          return;
+        }
+        let dis = x.key;
+        // if(dis.startsWith('ph_')){dis='';}
+        kb.append(`
+        <div class='key' style='width:${x.w}px;height:${x.h}' data="${x.key.toUpperCase()}">
+          <b>${dis}</b>
+          <br><div class='cts'></div>
+        </div>`);
+      });
+    }
+  </script>
+  <style>
+    .kb {
+      border: solid 1px lightgray;
+      /*  */
+      display: flex;
+      flex-wrap: wrap;
+      /* margin: auto; */
+      margin-top: 40px;
+    }
+
+    .line {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .key {
+      /* width: 45px;
+      height: 45px; */
+      border: solid 1px lightgray;
+      box-sizing: border-box;
+      padding: 2px;
+      font-size: 14px;
+    }
+
+    .ct {
+      font-size: 12px;
+      padding: 0px 2px;
+      color: red;
+      border: solid 1px;
+      border-radius: 5px;
+      display: inline-block;
+    }
+
+    .ct:empty {
+      border: 0px;
+    }
+
+    /* ===== */
+    .note {
+      border: solid 1px lightgray;
+      width: 300px;
+      height: calc(45*5*1.5px);
+      float: left;
+      margin-right: 20px;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="note">
+    <pre class="note_in">
+    </pre>
+  </div>
+  <div class="kb">
+  </div>
+</body>
+
+</html>
