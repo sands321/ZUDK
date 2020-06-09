@@ -1,2 +1,2 @@
 # ZUDK
-Unified Shortcuts, Easy Life !
+🖖 Unified Keymap, Easy Life !
