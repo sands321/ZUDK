@@ -136,7 +136,7 @@
         if (!x.match(fnKeys_reg)) { return; }
         x = x.replace(/^\d+\./, '').trim();
         // x=x.split(',');
-        x = x.match(/[^,][^\(]+\([^\)]+\)/g);
+        x = x.match(/[^,，][^\(]+\([^\)]+\)/g);
         x.forEach(prX => {
           prX = prX.trim();//.replace(/^,/,'');
           pr = prX.match(/(.+)\((.+)\)/);

@@ -83,8 +83,8 @@ wx->
 金山词霸->
 1.⌥+f(至-搜索框),⌥+s(发音)
 `.trim();
-// kmap_data+='\n'+km_1;
 
+// word
 let kmap_wd=`
 快捷键->
 1.⌃+k(查-快捷键),⌘+⌃+z(切换-绘图)
@@ -114,15 +114,13 @@ let kmap_wd=`
 1.⌃+⇧+a(插-评论),⌘+⇧+e(切-改追),⌘+⌥+f(插-脚注),⌘+⌥+e(插-尾注)
 `.trim();
 
-
-
-// x
+// kmap_data+='\n'+km_1;
 // kmap_data=kmap_wd;
-// kmap_data=kmap_vim;
 
 let kmap_data1=`
-1.⌘+4(显-调试)
+1.⌘+4(显-调试),⌘+5(ok)
 `.trim();
+// kmap_data=kmap_data1;
 
 
 
