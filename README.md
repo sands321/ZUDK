@@ -35,3 +35,17 @@
 
    ⌘+c(复制),⌘+⇧+w(关闭窗口)
 
+
+
+## 效果
+
+![image](https://github.com/sands321/ZUDK/blob/master/screenshots/img1.png)
+
+![image](https://github.com/sands321/ZUDK/blob/master/screenshots/img2.png)
+
+![image](https://github.com/sands321/ZUDK/blob/master/screenshots/img3.png)
+
+![image](https://github.com/sands321/ZUDK/blob/master/screenshots/img4.png)
+
+![image](https://github.com/sands321/ZUDK/blob/master/screenshots/img5.png)
+
