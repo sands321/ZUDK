@@ -180,7 +180,7 @@
         // let tmpNd = $(`[data='${ks.cm}'] .cts`);
         let cm = ks.cm;
         if (cm == '\\') { cm = '\\\\'; }
-        let tmpNd = $(`[data='${cm}'] .cts`);
+        let tmpNd = $(`[data="${cm}"] .cts`);
 
         tmpNd.append(`<span class='ct'>${ks.v}</span>`);
       });
